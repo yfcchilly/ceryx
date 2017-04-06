@@ -24,5 +24,4 @@ local metatable = {
 
 setmetatable(RedisManager.runCommand, metatable);
 
-
 return RedisManager
