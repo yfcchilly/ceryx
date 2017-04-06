@@ -17,21 +17,19 @@ if res then
     return
 end
 
--- local redis = require "resty.redis"
--- local red = redis:new()
--- red:set_timeout(100) -- 100 ms
--- local redis_host = os.getenv("CERYX_REDIS_HOST")
--- if not redis_host then redis_host = "127.0.0.1" end
--- local redis_port = os.getenv("CERYX_REDIS_PORT")
--- if not redis_port then redis_port = 6379 end
--- local res, err = red:connect(redis_host, redis_port)
+local redis = require "resty.redis"
+local red = redis:new()
+red:set_timeout(100) -- 100 ms
+local redis_host = os.getenv("CERYX_REDIS_HOST")
+if not redis_host then redis_host = "127.0.0.1" end
+local redis_port = os.getenv("CERYX_REDIS_PORT")
+if not redis_port then redis_port = 6379 end
+local res, err = red:connect(redis_host, redis_port)
 
--- -- Return if could not connect to Redis
--- if not res then
---     return
--- end
-
-local RedisManager = require "RedisManager"
+-- Return if could not connect to Redis
+if not res then
+    return
+end
 
 -- Construct Redis key
 local prefix = os.getenv("CERYX_REDIS_PREFIX")
@@ -39,20 +37,22 @@ if not prefix then prefix = "ceryx" end
 local key = prefix .. ":routes:" .. appkey
 
 -- Try to get target for host
--- res, err = red:get(key)
-res, err = RedisManager.runCommand("get", key)
+res, err = red:get(key)
 if not res or res == ngx.null then
     -- Construct Redis key for $wildcard
     key = prefix .. ":routes:$wildcard"
-    -- res, err = red:get(key)
-    res, err = RedisManager.runCommand("get", key)
+    res, err = red:get(key)
     if not res or res == ngx.null then
         return
     end
+    -- put connection to pool, size = 100
+    red:set_keepalive(10000, 100)
     ngx.var.container_url = res
     return
 end
 
+-- put connection to pool, size = 100
+red:set_keepalive(10000, 100)
 -- Save found key to local cache for 5 seconds
 cache:set(host, res, 5)
 
