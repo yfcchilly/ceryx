@@ -46,13 +46,13 @@ if not res or res == ngx.null then
         return
     end
     -- put connection to pool, size = 100
-    red:set_keepalive(10000, 100)
+    red:set_keepalive(150000, 100)
     ngx.var.container_url = res
     return
 end
 
 -- put connection to pool, size = 100
-red:set_keepalive(10000, 100)
+red:set_keepalive(150000, 100)
 -- Save found key to local cache for 5 seconds
 cache:set(host, res, 5)
 
